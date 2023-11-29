@@ -4,5 +4,63 @@ format: html
 ---
 
 ```{r packages}
+library(tidyverse)
+library(rvest)
+library(dplyr)
+```
 
+```{r}
+#scraping the data
+read_html("https://www.blueletterbible.org/study/pnt/pnt07.cfm")|>
+  html_elements("h2")|>
+  html_text2() -> towns 
+
+read_html("https://www.blueletterbible.org/study/pnt/pnt07.cfm")|>
+  html_elements("strong")|>
+  html_text2() -> city1
+
+str_replace(string = city1,
+            pattern = "\\:$",
+            replacement = "") -> city
+
+read_html("https://www.blueletterbible.org/study/pnt/pnt07.cfm")|>
+  html_elements("li")|>
+  html_text2() -> all_li
+
+description_full <- all_li[117:179]
+
+# Need to use str_replace() to replace the name of each full description with nothing ""
+str_replace(string = description_full,
+            pattern = "^[A-Z].+:\\s",
+            replacement = "") -> description_verse
+
+str_replace(string = description_verse,
+            pattern = "\\([A-Z].*\\)\\.$",
+            replacement = "") -> description 
+
+read_html("https://www.blueletterbible.org/study/pnt/pnt07.cfm")|>
+  html_elements(".nowrap")|>
+  html_text2() -> verse 
+
+#changing it into tibble
+town <- tibble(towns)
+city <- tibble(city)
+description <- tibble(description)
+verse <- tibble(verse)
+```
+
+```{r}
+#tidying the town table 
+town |>
+  slice(35:46) -> town
+
+```
+
+```{r}
+#combining all the tibbles 
+biblical_locations<- cbind(city, description)
+```
+
+```{r}
+write_csv(biblical_locations, "./data/imported_data/locations.csv")
 ```
